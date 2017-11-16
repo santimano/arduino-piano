@@ -248,11 +248,8 @@ void setup()
   // serial1: bluetooth
   Serial1.begin(9600);
 
-  // init ethern
-  if (Ethernet.begin(mac) == 0) {
-    Serial.println("Failed to configure Ethernet using DHCP");
-    Ethernet.begin(mac, ip);
-  }
+  Ethernet.begin(mac, ip);
+  
   delay(1000);
 
   // init lcd
