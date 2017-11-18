@@ -4,8 +4,6 @@
 #include <Ethernet.h>
 #include <Arduino.h>
 
-
-
 // ## constantes ##
 
 // lcd
@@ -16,7 +14,6 @@ byte mac[] = { 0xFE, 0xAD, 0xFE, 0xAF, 0xFE, 0xED };
 char server[] = "192.168.3.57";
 IPAddress ip(192, 168, 3, 58);
 EthernetClient client;
-
 
 // modos
 enum modo
@@ -42,7 +39,8 @@ enum request
 
 // notas
 const int keys[12] = { 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44 };
-const char notes[12][6] = { "C4, ", "C#4, ", "D4, ", "D#4, ", "E4, ", "F4, ", "F#4, ", "G4, ", "G#4, ", "A4, ", "A#4, ", "B4, " };
+// const char notes[12][6] = { "C4, ", "C#4, ", "D4, ", "D#4, ", "E4, ", "F4, ", "F#4, ", "G4, ", "G#4, ", "A4, ", "A#4, ", "B4, " };
+const char notes[12] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B' };
 const int threshold = 2;
 bool touched[12];
 
@@ -245,7 +243,7 @@ void leerBluetooth()
 void setup()
 {
   // serial: datos
-  Serial.begin(57600);
+  Serial.begin(115200);
 
   // serial1: bluetooth
   Serial1.begin(9600);
@@ -292,15 +290,19 @@ void loop()
     handleKey(i);
   }
 
-  char notasAEnviar[1024];
-  strcpy(notasAEnviar,"");
+  char notasAEnviar[13];
+
+  char n = 0;
 
   for (int i = 0; i < 12; i++) {
     if (touched[i]) {
-      strcat(notasAEnviar,notes[i]);
+      notasAEnviar[n] = notes[i];
+      n++;
     }
   }
-  Serial.println(notasAEnviar);
+  notasAEnviar[n] = '\0';
 
-  delay(400);
+  Serial.write(notasAEnviar);
+
+  delay(200);
 }
