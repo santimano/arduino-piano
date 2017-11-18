@@ -42,7 +42,7 @@ enum request
 
 // notas
 const int keys[12] = { 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44 };
-const char notes[12][5] = { "C4, ", "C#4, ", "D4, ", "D#4, ", "E4, ", "F4, ", "F#4, ", "G4, ", "G#4, ", "A4, ", "A#4, ", "B4, " };
+const char notes[12][6] = { "C4, ", "C#4, ", "D4, ", "D#4, ", "E4, ", "F4, ", "F#4, ", "G4, ", "G#4, ", "A4, ", "A#4, ", "B4, " };
 const int threshold = 2;
 bool touched[12];
 
@@ -166,17 +166,18 @@ int mandarRequestHttp(int tipoRequest, char parametro[])
 void cambiarTipoSonido()
 {
 
+  char tipoSonido[32];
   switch (sonido)
   {
   case PIANO:
-    mandarRequestHttp(GET,"/.vscode/arduino.json");
+    strcpy(tipoSonido, "/.vscode/arduino.json");
     break;
   case BAJO:
-    mandarRequestHttp(GET,"/.vscode/c_cpp_properties.json");
+    strcpy(tipoSonido, "/.vscode/c_cpp_properties.json");
     break;
   }
-
-  return;
+  
+  mandarRequestHttp(GET,tipoSonido);
 }
 
 // imprimir el lcd
