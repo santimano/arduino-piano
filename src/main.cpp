@@ -41,9 +41,10 @@ enum request
 } request;
 
 // notas
-const int keys[8] = { 22, 24, 26, 28, 30, 32, 34, 36 };
-const int threshold[8] = { 2, 2, 2, 2, 2, 2, 2, 2 };
-bool touched[8];
+const int keys[12] = { 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44 };
+const char notes[12][5] = { "C4, ", "C#4, ", "D4, ", "D#4, ", "E4, ", "F4, ", "F#4, ", "G4, ", "G#4, ", "A4, ", "A#4, ", "B4, " };
+const int threshold = 2;
+bool touched[12];
 
 // ## funciones ##
 
@@ -108,17 +109,17 @@ uint8_t readCapacitivePin(int pinToMeasure) {
 void handleKey(int index) {
   int cycles = readCapacitivePin(keys[index]);
 
-  if (cycles >= threshold[index]) {
+  if (cycles >= threshold) {
     touched[index] = true;
-    Serial.print(index);
+    //Serial.print(index);
   }
 
-  if (touched[index] && cycles < threshold[index]) {
+  if (touched[index] && cycles < threshold) {
     touched[index] = false;
   }
 }
 
-// 
+// mandar un request http
 int mandarRequestHttp(int tipoRequest, char parametro[]) 
 {
 
@@ -243,7 +244,7 @@ void leerBluetooth()
 void setup()
 {
   // serial: datos
-  Serial.begin(9600);
+  Serial.begin(57600);
 
   // serial1: bluetooth
   Serial1.begin(9600);
@@ -270,6 +271,7 @@ void setup()
 // # loop ## 
 void loop()
 {
+
   leerBluetooth();
 
   switch (modo)
@@ -285,9 +287,19 @@ void loop()
     break;
   }
 
-  for (int i = 0; i < 8; i++) {
+  for (int i = 0; i < 12; i++) {
     handleKey(i);
   }
 
-  delay(100);
+  char notasAEnviar[1024];
+  strcpy(notasAEnviar,"");
+
+  for (int i = 0; i < 12; i++) {
+    if (touched[i]) {
+      strcat(notasAEnviar,notes[i]);
+    }
+  }
+  Serial.println(notasAEnviar);
+
+  delay(400);
 }
