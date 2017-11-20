@@ -107,9 +107,9 @@ uint8_t readCapacitivePin(int pinToMeasure) {
 void handleKey(int index) {
   int cycles = readCapacitivePin(keys[index]);
 
-  if (cycles >= threshold) {
+  if (!touched[index] && cycles >= threshold) {
     touched[index] = true;
-    //Serial.print(index);
+    Serial.write(notes[index]);
   }
 
   if (touched[index] && cycles < threshold) {
@@ -302,7 +302,7 @@ void loop()
   }
   notasAEnviar[n] = '\0';
 
-  Serial.write(notasAEnviar);
+  //Serial.write(notasAEnviar);
 
-  delay(200);
+  delay(100);
 }
