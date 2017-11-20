@@ -43,6 +43,7 @@ const int keys[12] = { 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44 };
 const char notes[12] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B' };
 const int threshold = 2;
 bool touched[12];
+bool ledPrendido = false;
 
 // ## funciones ##
 
@@ -242,6 +243,9 @@ void leerBluetooth()
 // ## setup ##
 void setup()
 {
+  // LED Arduino
+  pinMode(LED_BUILTIN, OUTPUT);
+
   // serial: datos
   Serial.begin(115200);
 
@@ -277,32 +281,48 @@ void loop()
   {
   case TEST:
     // Serial.println("TEST");
+    char notasAEnviar[13] = {'1', '0', '2', '1', '1', '1', '1', '1', '1', '1', '1', '1', '\0'};
+    Serial.write(notasAEnviar);
+
+    delay(400);
+
+    if (ledPrendido)
+    {
+      digitalWrite(LED_BUILTIN, LOW);
+      ledPrendido = false;
+    } else {
+      digitalWrite(LED_BUILTIN, HIGH);
+      ledPrendido = true;
+    }
+
+    delay(100);
+
+    // TODO: enviar HTTP para probar el Server
+    // mandarRequestHttp(POST, sarasa);
     break;
   case NORMAL:
     // Serial.println("NORMAL");
+    for (int i = 0; i < 12; i++) {
+      handleKey(i);
+    }
+  
+    char notasAEnviar[13];
+    char n = 0;
+  
+    for (int i = 0; i < 12; i++) {
+      if (touched[i]) {
+        notasAEnviar[n] = notes[i];
+        n++;
+      }
+    }
+    notasAEnviar[n] = '\0';
+  
+    Serial.write(notasAEnviar);
     break;
   case MANTENIMIENTO:
     // Serial.println("MANTENIMIENTO");
     break;
   }
-
-  for (int i = 0; i < 12; i++) {
-    handleKey(i);
-  }
-
-  char notasAEnviar[13];
-
-  char n = 0;
-
-  for (int i = 0; i < 12; i++) {
-    if (touched[i]) {
-      notasAEnviar[n] = notes[i];
-      n++;
-    }
-  }
-  notasAEnviar[n] = '\0';
-
-  //Serial.write(notasAEnviar);
 
   delay(100);
 }
