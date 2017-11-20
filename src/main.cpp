@@ -11,8 +11,8 @@ LiquidCrystal_I2C lcd(0x3f, 20, 4);
 
 // ethernet
 byte mac[] = { 0xFE, 0xAD, 0xFE, 0xAF, 0xFE, 0xED };
-char server[] = "192.168.3.57";
-IPAddress ip(192, 168, 3, 58);
+char server[] = "192.168.1.1";
+IPAddress ip(192, 168, 1, 2);
 EthernetClient client;
 
 // modos
@@ -27,7 +27,11 @@ enum modo
 enum sonido
 {
   PIANO,
-  BAJO
+  GUITARRA,
+  ORGANO,
+  EDM,
+  CUSTOM_1,
+  CUSTOM_2
 } sonido;
 
 // request
@@ -38,12 +42,11 @@ enum request
 } request;
 
 // notas
-const int keys[12] = { 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44 };
-// const char notes[12][6] = { "C4, ", "C#4, ", "D4, ", "D#4, ", "E4, ", "F4, ", "F#4, ", "G4, ", "G#4, ", "A4, ", "A#4, ", "B4, " };
+const int keys[12] = { 44, 42, 40, 38, 36, 34, 32, 30, 28, 26, 24, 22 };
 const char notes[12] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B' };
 const int threshold = 2;
 bool touched[12];
-bool ledPrendido = false;
+const int ledNotas = 8;
 
 // ## funciones ##
 
@@ -111,72 +114,89 @@ void handleKey(int index) {
   if (!touched[index] && cycles >= threshold) {
     touched[index] = true;
     Serial.write(notes[index]);
+    digitalWrite(ledNotas,HIGH);
   }
 
   if (touched[index] && cycles < threshold) {
+    digitalWrite(ledNotas,LOW);    
     touched[index] = false;
   }
 }
 
 // mandar un request http
-int mandarRequestHttp(int tipoRequest, char parametro[]) 
+void mandarRequestHttp(int tipoRequest, char url[], char parametro[]) 
 {
 
-  char request[1024];
-  switch(tipoRequest) {
-    case GET:
-    strcpy(request,"GET ");
-    break;
-  case POST:
-    strcpy(request,"POST ");
-    break;
-  }
+  char buffer[128];
 
-  strcat(request, parametro);
-  strcat(request," HTTP/1.1");
+  if (client.connect(server, 3000)) {
 
-  if (client.connect(server, 8000)) {
-    Serial.println("connected");
-    client.println(request);
-    client.println("Host: 192.168.3.57:8000");
+    switch(tipoRequest) {
+      case GET:
+      sprintf(buffer,"GET %s HTTP/1.1", url);
+      break;
+    case POST:
+      sprintf(buffer,"POST %s HTTP/1.1", url);
+      break;
+    }
+
+    client.println(buffer);
+    sprintf(buffer, "Host: %s", server);
+    client.println(buffer);
     client.println("Connection: close");
+    if (parametro != NULL) {
+      client.println("Content-Type: application/x-www-form-urlencoded");
+      sprintf(buffer,"Content-Length: %u\r\n", strlen(parametro));
+      client.println(buffer);
+      client.print(parametro);
+    }
     client.println();
   } else {
-    Serial.println("connection failed");
+    // TODO: mostrar error de conexion
   }
 
   delay(2000);
   
   while (client.available()) {
     char c = client.read();
-    Serial.print(c);
+    // Serial.print(c);
   }
 
-  if (!client.connected()) {
-    Serial.println();
-    Serial.println("disconnecting.");
-    client.stop();
-  }
-
-  return 1;
+  client.stop();
 }
 
 // cambiar el tipo de sonido
 void cambiarTipoSonido()
 {
 
-  char tipoSonido[32];
+  char url[16];
+  char modo[32];
+
+  strcpy(url,"/mode");
+
   switch (sonido)
   {
   case PIANO:
-    strcpy(tipoSonido, "/.vscode/arduino.json");
+    strcpy(modo, "modo=piano");
     break;
-  case BAJO:
-    strcpy(tipoSonido, "/.vscode/c_cpp_properties.json");
+  case GUITARRA:
+    strcpy(modo, "modo=acoustic");
+    break;
+  case ORGANO:
+    strcpy(modo, "modo=organ");
+    break;
+  case EDM:
+    strcpy(modo, "modo=edm");
+    break;
+  case CUSTOM_1:
+    strcpy(modo, "modo=custom_1");
+    break;
+  case CUSTOM_2:
+    strcpy(modo, "modo=custom_2");
     break;
   }
   
-  mandarRequestHttp(GET,tipoSonido);
+  mandarRequestHttp(POST, url, modo);
 }
 
 // imprimir el lcd
@@ -204,9 +224,25 @@ void imprimirLcd()
     lcd.setCursor(0, 1);
     lcd.print("SONIDO: PIANO");
     break;
-  case BAJO:
+  case GUITARRA:
     lcd.setCursor(0, 1);
-    lcd.print("SONIDO: BAJO");
+    lcd.print("SONIDO: GUITARRA");
+    break;
+  case ORGANO:
+    lcd.setCursor(0, 1);
+    lcd.print("SONIDO: ORGANO");
+    break;
+  case EDM:
+    lcd.setCursor(0, 1);
+    lcd.print("SONIDO: EDM");
+    break;
+  case CUSTOM_1:
+    lcd.setCursor(0, 1);
+    lcd.print("SONIDO: CUSTOM_1");
+    break;
+  case CUSTOM_2:
+    lcd.setCursor(0, 1);
+    lcd.print("SONIDO: CUSTOM_2");
     break;
   }
 }
@@ -219,20 +255,44 @@ void leerBluetooth()
     int lectura = Serial1.read();
     if (lectura == 'T')
       modo = TEST;
-    else if (lectura == 'N')
+    else if (lectura == 'N') {
       modo = NORMAL;
-    else if (lectura == 'M')
+      digitalWrite(LED_BUILTIN, LOW);
+      digitalWrite(ledNotas, LOW);
+    }
+    else if (lectura == 'M'){
       modo = MANTENIMIENTO;
+      digitalWrite(LED_BUILTIN, LOW);
+      digitalWrite(ledNotas, LOW);
+    }
     else if (lectura == 'P')
     {
-      Serial.println("cambio a piano");
       sonido = PIANO;
       cambiarTipoSonido();
     }
-    else if (lectura == 'B')
+    else if (lectura == 'G')
     {
-      Serial.println("cambio a bajo");
-      sonido = BAJO;
+      sonido = GUITARRA;
+      cambiarTipoSonido();
+    }
+    else if (lectura == 'O')
+    {
+      sonido = ORGANO;
+      cambiarTipoSonido();
+    }
+    else if (lectura == 'E')
+    {
+      sonido = EDM;
+      cambiarTipoSonido();
+    }
+    else if (lectura == '1')
+    {
+      sonido = CUSTOM_1;
+      cambiarTipoSonido();
+    }
+    else if (lectura == '2')
+    {
+      sonido = CUSTOM_2;
       cambiarTipoSonido();
     }
 
@@ -245,6 +305,7 @@ void setup()
 {
   // LED Arduino
   pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(ledNotas, OUTPUT);
 
   // serial: datos
   Serial.begin(115200);
@@ -280,49 +341,97 @@ void loop()
   switch (modo)
   {
   case TEST:
-    // Serial.println("TEST");
-    char notasAEnviar[13] = {'1', '0', '2', '1', '1', '1', '1', '1', '1', '1', '1', '1', '\0'};
-    Serial.write(notasAEnviar);
 
-    delay(400);
+    lcd.clear();
+    lcd.print("MODO: TEST");
+    lcd.setCursor(0, 1);
+    lcd.print("TEST: SERIAL");
 
-    if (ledPrendido)
-    {
-      digitalWrite(LED_BUILTIN, LOW);
-      ledPrendido = false;
-    } else {
-      digitalWrite(LED_BUILTIN, HIGH);
-      ledPrendido = true;
-    }
+    Serial.write(notes[0]);
+    delay(200);
 
-    delay(100);
+    Serial.write(notes[4]);
+    delay(200);
 
-    // TODO: enviar HTTP para probar el Server
-    // mandarRequestHttp(POST, sarasa);
+    Serial.write(notes[7]);
+    delay(200);
+        
+    lcd.clear();
+    lcd.print("MODO: TEST");
+    lcd.setCursor(0, 1);
+    lcd.print("TEST: LEDS");
+
+    digitalWrite(LED_BUILTIN, HIGH);
+    digitalWrite(ledNotas, HIGH);
+
+    delay(2000);
+
+    digitalWrite(LED_BUILTIN, LOW);
+    digitalWrite(ledNotas, LOW);
+
+    lcd.clear();
+    lcd.print("MODO: TEST");
+    lcd.setCursor(0, 1);
+    lcd.print("TEST: ETHERNET");
+
+    char url[16];
+    strcpy(url,"/test");
+    mandarRequestHttp(POST, url, NULL);
+
+    lcd.clear();
+    lcd.print("MODO: TEST");
+    lcd.setCursor(0, 1);
+    lcd.print("TEST: SONIDOS");
+
+    sonido = GUITARRA;
+    cambiarTipoSonido();
+
+    Serial.write(notes[0]);
+    delay(200);
+
+    Serial.write(notes[4]);
+    delay(200);
+
+    Serial.write(notes[7]);
+    delay(200);
+
+    sonido = ORGANO;
+    cambiarTipoSonido();
+    
+    Serial.write(notes[0]);
+    delay(200);
+
+    Serial.write(notes[4]);
+    delay(200);
+
+    Serial.write(notes[7]);
+    delay(200);
+
+    sonido = EDM;
+    cambiarTipoSonido();
+    
+    Serial.write(notes[0]);
+    delay(200);
+
+    Serial.write(notes[4]);
+    delay(200);
+
+    Serial.write(notes[7]);
+    delay(200);
+
+    sonido = PIANO;
+    cambiarTipoSonido();
+
     break;
   case NORMAL:
-    // Serial.println("NORMAL");
     for (int i = 0; i < 12; i++) {
       handleKey(i);
-    }
-  
-    char notasAEnviar[13];
-    char n = 0;
-  
-    for (int i = 0; i < 12; i++) {
-      if (touched[i]) {
-        notasAEnviar[n] = notes[i];
-        n++;
-      }
-    }
-    notasAEnviar[n] = '\0';
-  
-    Serial.write(notasAEnviar);
+    }  
     break;
   case MANTENIMIENTO:
     // Serial.println("MANTENIMIENTO");
     break;
   }
 
-  delay(100);
+  //delay(50);
 }
