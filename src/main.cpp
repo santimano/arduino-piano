@@ -438,7 +438,7 @@ void setup()
   delay(2000);
 
   // init modo
-  modo = TEST;
+  modo = NORMAL;
   sonido = PIANO;
 
   imprimirLcd();
