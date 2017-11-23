@@ -42,7 +42,7 @@ enum request
 } request;
 
 // notas
-const int keys[12] = { 44, 42, 40, 38, 36, 34, 32, 30, 28, 26, 24, 22 };
+const int keys[12] = { 48, 46, 44, 42, 40, 38, 36, 34, 32, 30, 28, 26 };
 const char notes[12] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B' };
 const int threshold = 2;
 bool touched[12];
@@ -317,13 +317,17 @@ void testLED () {
   lcd.setCursor(0, 1);
   lcd.print("TEST: LEDS");
 
-  digitalWrite(LED_BUILTIN, HIGH);
-  digitalWrite(ledNotas, HIGH);
+  for(int i=0;i<2;i++) {    
+    digitalWrite(LED_BUILTIN, HIGH);
+    digitalWrite(ledNotas, HIGH);
+  
+    delay(2000);
+  
+    digitalWrite(LED_BUILTIN, LOW);
+    digitalWrite(ledNotas, LOW);
 
-  delay(2000);
-
-  digitalWrite(LED_BUILTIN, LOW);
-  digitalWrite(ledNotas, LOW);
+    delay(2000);
+  }
 }
 
 // probar ethernet
@@ -363,8 +367,14 @@ void testSonidos () {
   
 }
 
+// probar el buzzer
 void testBuzzer ()
 {
+  lcd.clear();
+  lcd.print("MODO: TEST");
+  lcd.setCursor(0, 1);
+  lcd.print("TEST: BUZZER");
+
   tone(BUZZER, 261, 400);
   delay(400);
   tone(BUZZER, 329, 400);
@@ -373,6 +383,30 @@ void testBuzzer ()
   delay(400);
   tone(BUZZER, 523, 400);
   delay(400);
+}
+
+// probar el lcd
+void testLCD () {
+
+  int i = 0;
+  int j = 0;
+
+  lcd.clear();
+  lcd.print("MODO: TEST");
+  lcd.setCursor(0, 1);
+  lcd.print("TEST: LCD");
+
+  delay(1000);
+
+  lcd.clear();
+  lcd.blink();
+  for (i=0;i<2;i++) {
+    for(j=0;j<16;j++) {
+      lcd.setCursor(j, i);
+      delay(800);
+    }
+  }
+  lcd.blink_off();
 }
 
 // ## setup ##
@@ -404,7 +438,7 @@ void setup()
   delay(2000);
 
   // init modo
-  modo = NORMAL;
+  modo = TEST;
   sonido = PIANO;
 
   imprimirLcd();
@@ -420,6 +454,7 @@ void loop()
   switch (modo)
   {
   case TEST:
+    testLCD();
     testBuzzer();
     testLED();
     testEthernet();
