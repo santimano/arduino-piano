@@ -48,6 +48,11 @@ const int threshold = 2;
 bool touched[12];
 const int ledNotas = 8;
 
+// BUZZER
+const int BUZZER = 4;
+const int NOTE_BUZZER = 440;
+const int DURATION_BUZZER = 400;
+
 // ## funciones ##
 
 // leer pin capacitivo
@@ -249,17 +254,14 @@ void leerBluetooth()
   if (Serial1.available())
   {
     int lectura = Serial1.read();
-    if (lectura == 'T')
+    if (lectura == 'T'){
       modo = TEST;
+    }
     else if (lectura == 'N') {
       modo = NORMAL;
-      digitalWrite(LED_BUILTIN, LOW);
-      digitalWrite(ledNotas, LOW);
     }
     else if (lectura == 'M'){
       modo = MANTENIMIENTO;
-      digitalWrite(LED_BUILTIN, LOW);
-      digitalWrite(ledNotas, LOW);
     }
     else if (lectura == 'P')
     {
@@ -291,7 +293,7 @@ void leerBluetooth()
       sonido = CUSTOM_2;
       cambiarTipoSonido();
     }
-
+    tone(BUZZER, NOTE_BUZZER, DURATION_BUZZER);
     imprimirLcd();
   }
 }
@@ -361,9 +363,24 @@ void testSonidos () {
   
 }
 
+void testBuzzer ()
+{
+  tone(BUZZER, 261, 400);
+  delay(400);
+  tone(BUZZER, 329, 400);
+  delay(400);
+  tone(BUZZER, 391, 400);
+  delay(400);
+  tone(BUZZER, 523, 400);
+  delay(400);
+}
+
 // ## setup ##
 void setup()
 {
+  // BUZZER
+  pinMode(BUZZER, OUTPUT);
+
   // LED Arduino
   pinMode(LED_BUILTIN, OUTPUT);
   pinMode(ledNotas, OUTPUT);
@@ -391,6 +408,7 @@ void setup()
   sonido = PIANO;
 
   imprimirLcd();
+  tone(BUZZER, NOTE_BUZZER, DURATION_BUZZER);  
 }
 
 // # loop ## 
@@ -402,6 +420,7 @@ void loop()
   switch (modo)
   {
   case TEST:
+    testBuzzer();
     testLED();
     testEthernet();
     testSonidos();
