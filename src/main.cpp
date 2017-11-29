@@ -18,21 +18,34 @@ EthernetClient client;
 // modos
 enum modo
 {
-  TEST,
-  NORMAL,
-  MANTENIMIENTO
+  MODO_TEST,
+  MODO_NORMAL,
+  MODO_MANTENIMIENTO
 } modo;
 
 // sonidos
 enum sonido
 {
-  PIANO,
-  GUITARRA,
-  ORGANO,
-  EDM,
-  CUSTOM_1,
-  CUSTOM_2
+  SONIDO_PIANO,
+  SONIDO_GUITARRA,
+  SONIDO_ORGANO,
+  SONIDO_EDM,
+  SONIDO_CUSTOM_1,
+  SONIDO_CUSTOM_2
 } sonido;
+
+// tests
+enum test 
+{
+  TEST_LCD,
+  TEST_LEDS,
+  TEST_BUZZER,
+  TEST_ETHERNET,
+  TEST_GUITARRA,
+  TEST_ORGANO,
+  TEST_EDM,
+  TEST_PIANO
+} test;
 
 // request http
 enum request
@@ -177,22 +190,22 @@ void cambiarTipoSonido() {
 
   switch (sonido)
   {
-  case PIANO:
+  case SONIDO_PIANO:
     strcpy(modo, "modo=piano");
     break;
-  case GUITARRA:
+  case SONIDO_GUITARRA:
     strcpy(modo, "modo=acoustic");
     break;
-  case ORGANO:
+  case SONIDO_ORGANO:
     strcpy(modo, "modo=organ");
     break;
-  case EDM:
+  case SONIDO_EDM:
     strcpy(modo, "modo=edm");
     break;
-  case CUSTOM_1:
+  case SONIDO_CUSTOM_1:
     strcpy(modo, "modo=custom_1");
     break;
-  case CUSTOM_2:
+  case SONIDO_CUSTOM_2:
     strcpy(modo, "modo=custom_2");
     break;
   }
@@ -203,49 +216,77 @@ void cambiarTipoSonido() {
 // imprimir el lcd
 void imprimirLcd()
 {
+  lcd.clear();
+
   switch (modo)
   {
-  case TEST:
-    lcd.clear();
-    lcd.print("MODO: TEST");
-    break;
-  case NORMAL:
-    lcd.clear();
-    lcd.print("MODO: NORMAL");
-    break;
-  case MANTENIMIENTO:
-    lcd.clear();
-    lcd.print("MODO: MANT.");
-    break;
+    case MODO_TEST:
+      lcd.print("MODO: TEST");
+      break;
+    case MODO_NORMAL:
+      lcd.print("MODO: NORMAL");
+      break;
+    case MODO_MANTENIMIENTO:
+      lcd.print("MODO: MANT.");
+      break;
   }
 
-  switch (sonido)
-  {
-  case PIANO:
-    lcd.setCursor(0, 1);
-    lcd.print("SONIDO: PIANO");
-    break;
-  case GUITARRA:
-    lcd.setCursor(0, 1);
-    lcd.print("SONIDO: GUITARRA");
-    break;
-  case ORGANO:
-    lcd.setCursor(0, 1);
-    lcd.print("SONIDO: ORGANO");
-    break;
-  case EDM:
-    lcd.setCursor(0, 1);
-    lcd.print("SONIDO: EDM");
-    break;
-  case CUSTOM_1:
-    lcd.setCursor(0, 1);
-    lcd.print("SONIDO: CUSTOM_1");
-    break;
-  case CUSTOM_2:
-    lcd.setCursor(0, 1);
-    lcd.print("SONIDO: CUSTOM_2");
-    break;
+  lcd.setCursor(0, 1);
+
+  if (modo == MODO_TEST) {
+    switch (test)
+    {
+      case TEST_LCD:
+        lcd.print("TEST: LCD");
+        break;
+      case TEST_LEDS:
+        lcd.print("TEST: LEDS");
+        break;
+      case TEST_BUZZER:
+        lcd.print("TEST: BUZZER");      
+        break;
+      case TEST_ETHERNET:
+        lcd.print("TEST: ETHERNET");
+        break;
+      case TEST_GUITARRA:
+        lcd.print("TEST: GUITARRA");
+        break;
+      case TEST_ORGANO:
+        lcd.print("TEST: ORGANO");
+        break;      
+      case TEST_EDM:
+        lcd.print("TEST: EDM");
+        break;    
+      case TEST_PIANO:
+        lcd.print("TEST: PIANO");
+        break;
+    }
+
+  } else {
+    
+    switch (sonido)
+    {
+      case SONIDO_PIANO:
+        lcd.print("SONIDO: PIANO");
+        break;
+      case SONIDO_GUITARRA:
+        lcd.print("SONIDO: GUITARRA");
+        break;
+      case SONIDO_ORGANO:
+        lcd.print("SONIDO: ORGANO");
+        break;
+      case SONIDO_EDM:
+        lcd.print("SONIDO: EDM");
+        break;
+      case SONIDO_CUSTOM_1:
+        lcd.print("SONIDO: CUSTOM_1");
+        break;
+      case SONIDO_CUSTOM_2:
+        lcd.print("SONIDO: CUSTOM_2");
+        break;
+    }
   }
+
 }
 
 // leer el bluetooth
@@ -255,43 +296,63 @@ void leerBluetooth()
   {
     int lectura = Serial1.read();
     if (lectura == 'T'){
-      modo = TEST;
+      modo = MODO_TEST;
     }
     else if (lectura == 'N') {
-      modo = NORMAL;
+      modo = MODO_NORMAL;
     }
     else if (lectura == 'M'){
-      modo = MANTENIMIENTO;
+      modo = MODO_MANTENIMIENTO;
     }
     else if (lectura == 'P')
     {
-      sonido = PIANO;
+      sonido = SONIDO_PIANO;
       cambiarTipoSonido();
     }
     else if (lectura == 'G')
     {
-      sonido = GUITARRA;
+      sonido = SONIDO_GUITARRA;
       cambiarTipoSonido();
     }
     else if (lectura == 'O')
     {
-      sonido = ORGANO;
+      sonido = SONIDO_ORGANO;
       cambiarTipoSonido();
     }
     else if (lectura == 'E')
     {
-      sonido = EDM;
+      sonido = SONIDO_EDM;
       cambiarTipoSonido();
     }
-    else if (lectura == '1' && modo == MANTENIMIENTO)
+    else if (lectura == '1')
     {
-      sonido = CUSTOM_1;
-      cambiarTipoSonido();
+      if (modo == MODO_MANTENIMIENTO) {
+        sonido = SONIDO_CUSTOM_1;
+        cambiarTipoSonido();
+      }
+      else {
+        lcd.clear();
+        lcd.print("ERROR: NO SE");
+        lcd.setCursor(0, 1);
+        lcd.print("PERMITE CUSTOM_1");
+        tone(BUZZER, NOTE_BUZZER, DURATION_BUZZER);        
+        delay(3000);
+      }
     }
-    else if (lectura == '2' && modo == MANTENIMIENTO)
+    else if (lectura == '2')
     {
-      sonido = CUSTOM_2;
-      cambiarTipoSonido();
+      if (modo == MODO_MANTENIMIENTO) {
+        sonido = SONIDO_CUSTOM_2;
+        cambiarTipoSonido();
+      }
+      else {
+        lcd.clear();
+        lcd.print("ERROR: NO SE");
+        lcd.setCursor(0, 1);
+        lcd.print("PERMITE CUSTOM_2");
+        tone(BUZZER, NOTE_BUZZER, DURATION_BUZZER);        
+        delay(3000);
+      }
     }
     tone(BUZZER, NOTE_BUZZER, DURATION_BUZZER);
     imprimirLcd();
@@ -312,10 +373,8 @@ void testNotes () {
 
 // probar leds
 void testLED () {
-  lcd.clear();
-  lcd.print("MODO: TEST");
-  lcd.setCursor(0, 1);
-  lcd.print("TEST: LEDS");
+  test = TEST_LEDS;
+  imprimirLcd();
 
   for(int i=0;i<2;i++) {    
     digitalWrite(LED_BUILTIN, HIGH);
@@ -332,10 +391,8 @@ void testLED () {
 
 // probar ethernet
 void testEthernet () {
-  lcd.clear();
-  lcd.print("MODO: TEST");
-  lcd.setCursor(0, 1);
-  lcd.print("TEST: ETHERNET");
+  test = TEST_ETHERNET;
+  imprimirLcd();
 
   char url[16];
   strcpy(url,"/test");
@@ -344,24 +401,29 @@ void testEthernet () {
 
 // probar los sonidos
 void testSonidos () {
-  lcd.clear();
-  lcd.print("MODO: TEST");
-  lcd.setCursor(0, 1);
-  lcd.print("TEST: SONIDOS");
 
-  sonido = GUITARRA;
+  test = TEST_GUITARRA;
+  imprimirLcd();
+  sonido = SONIDO_GUITARRA;
   cambiarTipoSonido();
   testNotes();
 
-  sonido = ORGANO;
+
+  test = TEST_ORGANO;
+  imprimirLcd();
+  sonido = SONIDO_ORGANO;
   cambiarTipoSonido();
   testNotes();
 
-  sonido = EDM;
+  test = TEST_EDM;
+  imprimirLcd();
+  sonido = SONIDO_EDM;
   cambiarTipoSonido();
   testNotes();
 
-  sonido = PIANO;
+  test = TEST_PIANO;
+  imprimirLcd();
+  sonido = SONIDO_PIANO;
   cambiarTipoSonido();
   testNotes();
   
@@ -370,10 +432,9 @@ void testSonidos () {
 // probar el buzzer
 void testBuzzer ()
 {
-  lcd.clear();
-  lcd.print("MODO: TEST");
-  lcd.setCursor(0, 1);
-  lcd.print("TEST: BUZZER");
+
+  test = TEST_BUZZER;
+  imprimirLcd();
 
   tone(BUZZER, 261, 400);
   delay(400);
@@ -391,10 +452,8 @@ void testLCD () {
   int i = 0;
   int j = 0;
 
-  lcd.clear();
-  lcd.print("MODO: TEST");
-  lcd.setCursor(0, 1);
-  lcd.print("TEST: LCD");
+  test = TEST_LCD;
+  imprimirLcd();
 
   delay(1000);
 
@@ -438,8 +497,8 @@ void setup()
   delay(2000);
 
   // init modo
-  modo = NORMAL;
-  sonido = PIANO;
+  modo = MODO_NORMAL;
+  sonido = SONIDO_PIANO;
 
   imprimirLcd();
   tone(BUZZER, NOTE_BUZZER, DURATION_BUZZER);  
@@ -453,7 +512,7 @@ void loop()
 
   switch (modo)
   {
-  case TEST:
+  case MODO_TEST:
     testLCD();
     testBuzzer();
     testLED();
@@ -467,5 +526,5 @@ void loop()
     break;
   }
 
-  delay(10);
+  delay(5);
 }
