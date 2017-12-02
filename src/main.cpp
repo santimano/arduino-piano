@@ -16,16 +16,14 @@ IPAddress ip(192, 168, 1, 101);
 EthernetClient client;
 
 // modos
-enum modo
-{
+enum modo {
   MODO_TEST,
   MODO_NORMAL,
   MODO_MANTENIMIENTO
 } modo;
 
 // sonidos
-enum sonido
-{
+enum sonido {
   SONIDO_PIANO,
   SONIDO_GUITARRA,
   SONIDO_ORGANO,
@@ -35,8 +33,7 @@ enum sonido
 } sonido;
 
 // tests
-enum test 
-{
+enum test {
   TEST_LCD,
   TEST_LEDS,
   TEST_BUZZER,
@@ -48,8 +45,7 @@ enum test
 } test;
 
 // request http
-enum request
-{
+enum request {
   GET,
   POST
 } request;
@@ -182,35 +178,47 @@ void mandarRequestHttp(int tipoRequest, char url[], char parametro[]) {
 }
 
 // cambiar el tipo de sonido
-void cambiarTipoSonido() {
+void cambiarTipoSonido(enum sonido s) {
   char url[16];
-  char modo[32];
+  char tipoSonido[32];
+
+  sonido = s;
 
   strcpy(url,"/mode");
 
   switch (sonido)
   {
   case SONIDO_PIANO:
-    strcpy(modo, "modo=piano");
+    strcpy(tipoSonido, "modo=piano");
     break;
   case SONIDO_GUITARRA:
-    strcpy(modo, "modo=acoustic");
+    strcpy(tipoSonido, "modo=acoustic");
     break;
   case SONIDO_ORGANO:
-    strcpy(modo, "modo=organ");
+    strcpy(tipoSonido, "modo=organ");
     break;
   case SONIDO_EDM:
-    strcpy(modo, "modo=edm");
+    strcpy(tipoSonido, "modo=edm");
     break;
   case SONIDO_CUSTOM_1:
-    strcpy(modo, "modo=custom_1");
+    strcpy(tipoSonido, "modo=custom_1");
     break;
   case SONIDO_CUSTOM_2:
-    strcpy(modo, "modo=custom_2");
+    strcpy(tipoSonido, "modo=custom_2");
     break;
   }
   
-  mandarRequestHttp(POST, url, modo);
+  mandarRequestHttp(POST, url, tipoSonido);
+  if (modo != MODO_TEST)
+    tone(BUZZER, NOTE_BUZZER, DURATION_BUZZER);
+  imprimirLcd();
+}
+
+// cambiar el modo
+void cambiarModo(enum modo m) {
+  modo = m;
+  tone(BUZZER, NOTE_BUZZER, DURATION_BUZZER);
+  imprimirLcd();
 }
 
 // imprimir el lcd
@@ -296,39 +304,34 @@ void leerBluetooth()
   {
     int lectura = Serial1.read();
     if (lectura == 'T'){
-      modo = MODO_TEST;
+      cambiarModo(MODO_TEST);
     }
     else if (lectura == 'N') {
-      modo = MODO_NORMAL;
+      cambiarModo(MODO_NORMAL);
     }
     else if (lectura == 'M'){
-      modo = MODO_MANTENIMIENTO;
+      cambiarModo(MODO_MANTENIMIENTO);
     }
     else if (lectura == 'P')
     {
-      sonido = SONIDO_PIANO;
-      cambiarTipoSonido();
+      cambiarTipoSonido(SONIDO_PIANO);
     }
     else if (lectura == 'G')
     {
-      sonido = SONIDO_GUITARRA;
-      cambiarTipoSonido();
+      cambiarTipoSonido(SONIDO_GUITARRA);
     }
     else if (lectura == 'O')
     {
-      sonido = SONIDO_ORGANO;
-      cambiarTipoSonido();
+      cambiarTipoSonido(SONIDO_ORGANO);
     }
     else if (lectura == 'E')
     {
-      sonido = SONIDO_EDM;
-      cambiarTipoSonido();
+      cambiarTipoSonido(SONIDO_EDM);
     }
     else if (lectura == '1')
     {
       if (modo == MODO_MANTENIMIENTO) {
-        sonido = SONIDO_CUSTOM_1;
-        cambiarTipoSonido();
+        cambiarTipoSonido(SONIDO_CUSTOM_1);
       }
       else {
         lcd.clear();
@@ -342,8 +345,7 @@ void leerBluetooth()
     else if (lectura == '2')
     {
       if (modo == MODO_MANTENIMIENTO) {
-        sonido = SONIDO_CUSTOM_2;
-        cambiarTipoSonido();
+        cambiarTipoSonido(SONIDO_CUSTOM_2);
       }
       else {
         lcd.clear();
@@ -354,8 +356,6 @@ void leerBluetooth()
         delay(3000);
       }
     }
-    tone(BUZZER, NOTE_BUZZER, DURATION_BUZZER);
-    imprimirLcd();
   }
 }
 
@@ -401,38 +401,26 @@ void testEthernet () {
 
 // probar los sonidos
 void testSonidos () {
-
   test = TEST_GUITARRA;
-  imprimirLcd();
-  sonido = SONIDO_GUITARRA;
-  cambiarTipoSonido();
+  cambiarTipoSonido(SONIDO_GUITARRA);
   testNotes();
 
 
   test = TEST_ORGANO;
-  imprimirLcd();
-  sonido = SONIDO_ORGANO;
-  cambiarTipoSonido();
+  cambiarTipoSonido(SONIDO_ORGANO);
   testNotes();
 
   test = TEST_EDM;
-  imprimirLcd();
-  sonido = SONIDO_EDM;
-  cambiarTipoSonido();
+  cambiarTipoSonido(SONIDO_EDM);
   testNotes();
 
   test = TEST_PIANO;
-  imprimirLcd();
-  sonido = SONIDO_PIANO;
-  cambiarTipoSonido();
-  testNotes();
-  
+  cambiarTipoSonido(SONIDO_PIANO);
+  testNotes();  
 }
 
 // probar el buzzer
-void testBuzzer ()
-{
-
+void testBuzzer () {
   test = TEST_BUZZER;
   imprimirLcd();
 
@@ -455,7 +443,7 @@ void testLCD () {
   test = TEST_LCD;
   imprimirLcd();
 
-  delay(1000);
+  delay(2000);
 
   lcd.clear();
   lcd.blink();
@@ -469,8 +457,7 @@ void testLCD () {
 }
 
 // ## setup ##
-void setup()
-{
+void setup() {
   // BUZZER
   pinMode(BUZZER, OUTPUT);
 
@@ -484,31 +471,27 @@ void setup()
   // serial1: bluetooth
   Serial1.begin(9600);
 
-  if (Ethernet.begin(mac) == 0) {
-    Ethernet.begin(mac, ip);
-  }
-  
-  delay(1000);
-
   // init lcd
   lcd.init();
   lcd.init();
   lcd.backlight();
   lcd.setCursor(0, 0);
   lcd.print("Bienvenido!");
+
+  if (Ethernet.begin(mac) == 0) {
+    Ethernet.begin(mac, ip);
+  }  
   delay(2000);
 
   // init modo
   modo = MODO_NORMAL;
-  sonido = SONIDO_PIANO;
 
-  imprimirLcd();
-  tone(BUZZER, NOTE_BUZZER, DURATION_BUZZER);  
+  // init sonido
+  cambiarTipoSonido(SONIDO_PIANO);
 }
 
 // # loop ## 
-void loop()
-{
+void loop() {
 
   leerBluetooth();
 
@@ -520,6 +503,7 @@ void loop()
     testLED();
     testEthernet();
     testSonidos();
+    cambiarModo(MODO_NORMAL);
     break;
   default:
     for (int i = 0; i < 12; i++) {
