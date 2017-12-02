@@ -11,8 +11,8 @@ LiquidCrystal_I2C lcd(0x3f, 20, 4);
 
 // ethernet
 byte mac[] = { 0xFE, 0xAD, 0xFE, 0xAF, 0xFE, 0xED };
-char server[] = "192.168.1.1";
-IPAddress ip(192, 168, 1, 2);
+char server[] = "192.168.1.100";
+IPAddress ip(192, 168, 1, 101);
 EthernetClient client;
 
 // modos
@@ -484,7 +484,9 @@ void setup()
   // serial1: bluetooth
   Serial1.begin(9600);
 
-  Ethernet.begin(mac, ip);
+  if (Ethernet.begin(mac) == 0) {
+    Ethernet.begin(mac, ip);
+  }
   
   delay(1000);
 
