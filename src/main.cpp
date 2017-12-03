@@ -10,20 +10,22 @@
 LiquidCrystal_I2C lcd(0x3f, 20, 4);
 
 // ethernet
-byte mac[] = { 0xFE, 0xAD, 0xFE, 0xAF, 0xFE, 0xED };
+byte mac[] = {0xFE, 0xAD, 0xFE, 0xAF, 0xFE, 0xED};
 char server[] = "192.168.1.100";
 IPAddress ip(192, 168, 1, 101);
 EthernetClient client;
 
 // modos
-enum modo {
+enum modo
+{
   MODO_TEST,
   MODO_NORMAL,
   MODO_MANTENIMIENTO
 } modo;
 
 // sonidos
-enum sonido {
+enum sonido
+{
   SONIDO_PIANO,
   SONIDO_GUITARRA,
   SONIDO_ORGANO,
@@ -33,7 +35,8 @@ enum sonido {
 } sonido;
 
 // tests
-enum test {
+enum test
+{
   TEST_LCD,
   TEST_LEDS,
   TEST_BUZZER,
@@ -45,14 +48,15 @@ enum test {
 } test;
 
 // request http
-enum request {
+enum request
+{
   GET,
   POST
 } request;
 
 // notas
-const int keys[12] = { 48, 46, 44, 42, 40, 38, 36, 34, 32, 30, 28, 26 };
-const char notes[12] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B' };
+const int keys[12] = {48, 46, 44, 42, 40, 38, 36, 34, 32, 30, 28, 26};
+const char notes[12] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B'};
 const int threshold = 2;
 bool touched[12];
 const int ledNotas = 8;
@@ -65,10 +69,11 @@ const int DURATION_BUZZER = 400;
 // ## funciones ##
 
 // leer pin capacitivo
-uint8_t readCapacitivePin(int pinToMeasure) {
-  volatile uint8_t* port;
-  volatile uint8_t* ddr;
-  volatile uint8_t* pin;
+uint8_t readCapacitivePin(int pinToMeasure)
+{
+  volatile uint8_t *port;
+  volatile uint8_t *ddr;
+  volatile uint8_t *pin;
   byte bitmask;
 
   port = portOutputRegister(digitalPinToPort(pinToMeasure));
@@ -78,7 +83,7 @@ uint8_t readCapacitivePin(int pinToMeasure) {
 
   // Discharge the pin first by setting it low and output
   *port &= ~(bitmask);
-  *ddr  |= bitmask;
+  *ddr |= bitmask;
   delay(1);
 
   // Prevent the timer IRQ from disturbing our measurement
@@ -92,8 +97,9 @@ uint8_t readCapacitivePin(int pinToMeasure) {
   // decreases the number of hardware cycles between each read of the pin,
   // thus increasing sensitivity.
 
+
   uint8_t cycles = 17;
-       if (*pin & bitmask) { cycles =  0;}
+  if (*pin & bitmask) { cycles =  0;}
   else if (*pin & bitmask) { cycles =  1;}
   else if (*pin & bitmask) { cycles =  2;}
   else if (*pin & bitmask) { cycles =  3;}
@@ -111,44 +117,50 @@ uint8_t readCapacitivePin(int pinToMeasure) {
   else if (*pin & bitmask) { cycles = 15;}
   else if (*pin & bitmask) { cycles = 16;}
 
-  // End of timing-critical section
+// End of timing-critical section
   interrupts();
 
   // Discharge the pin again by setting it low and output
   *port &= ~(bitmask);
-  *ddr  |= bitmask;
+  *ddr |= bitmask;
 
   return cycles;
 }
 
 // manejar apretado pin
-void handleKey(int index) {
+void handleKey(int index)
+{
   int cycles = readCapacitivePin(keys[index]);
 
-  if (!touched[index] && cycles >= threshold) {
+  if (!touched[index] && cycles >= threshold)
+  {
     touched[index] = true;
     Serial.write(notes[index]);
-    digitalWrite(ledNotas,HIGH);
+    digitalWrite(ledNotas, HIGH);
   }
 
-  if (touched[index] && cycles < threshold) {
-    digitalWrite(ledNotas,LOW);    
+  if (touched[index] && cycles < threshold)
+  {
+    digitalWrite(ledNotas, LOW);
     touched[index] = false;
   }
 }
 
 // mandar un request http
-void mandarRequestHttp(int tipoRequest, char url[], char parametro[]) {
+void mandarRequestHttp(int tipoRequest, char url[], char parametro[])
+{
   char buffer[128];
 
-  if (client.connect(server, 3000)) {
+  if (client.connect(server, 3000))
+  {
 
-    switch(tipoRequest) {
-      case GET:
-      sprintf(buffer,"GET %s HTTP/1.1", url);
+    switch (tipoRequest)
+    {
+    case GET:
+      sprintf(buffer, "GET %s HTTP/1.1", url);
       break;
     case POST:
-      sprintf(buffer,"POST %s HTTP/1.1", url);
+      sprintf(buffer, "POST %s HTTP/1.1", url);
       break;
     }
 
@@ -156,35 +168,39 @@ void mandarRequestHttp(int tipoRequest, char url[], char parametro[]) {
     sprintf(buffer, "Host: %s", server);
     client.println(buffer);
     client.println("Connection: close");
-    if (parametro != NULL) {
+    if (parametro != NULL)
+    {
       client.println("Content-Type: application/x-www-form-urlencoded");
-      sprintf(buffer,"Content-Length: %u\r\n", strlen(parametro));
+      sprintf(buffer, "Content-Length: %u\r\n", strlen(parametro));
       client.println(buffer);
       client.print(parametro);
     }
     client.println();
-  } else {
+  }
+  else
+  {
     // TODO: mostrar error de conexion
   }
 
   delay(2000);
-  
-  while (client.available()) {
+
+  while (client.available())
+  {
     char c = client.read();
-    // Serial.print(c);
   }
 
   client.stop();
 }
 
 // cambiar el tipo de sonido
-void cambiarTipoSonido(enum sonido s) {
+void cambiarTipoSonido(enum sonido s)
+{
   char url[16];
   char tipoSonido[32];
 
   sonido = s;
 
-  strcpy(url,"/mode");
+  strcpy(url, "/mode");
 
   switch (sonido)
   {
@@ -207,7 +223,7 @@ void cambiarTipoSonido(enum sonido s) {
     strcpy(tipoSonido, "modo=custom_2");
     break;
   }
-  
+
   mandarRequestHttp(POST, url, tipoSonido);
   if (modo != MODO_TEST)
     tone(BUZZER, NOTE_BUZZER, DURATION_BUZZER);
@@ -215,7 +231,8 @@ void cambiarTipoSonido(enum sonido s) {
 }
 
 // cambiar el modo
-void cambiarModo(enum modo m) {
+void cambiarModo(enum modo m)
+{
   modo = m;
   tone(BUZZER, NOTE_BUZZER, DURATION_BUZZER);
   imprimirLcd();
@@ -228,73 +245,73 @@ void imprimirLcd()
 
   switch (modo)
   {
-    case MODO_TEST:
-      lcd.print("MODO: TEST");
-      break;
-    case MODO_NORMAL:
-      lcd.print("MODO: NORMAL");
-      break;
-    case MODO_MANTENIMIENTO:
-      lcd.print("MODO: MANT.");
-      break;
+  case MODO_TEST:
+    lcd.print("MODO: TEST");
+    break;
+  case MODO_NORMAL:
+    lcd.print("MODO: NORMAL");
+    break;
+  case MODO_MANTENIMIENTO:
+    lcd.print("MODO: MANT.");
+    break;
   }
 
   lcd.setCursor(0, 1);
 
-  if (modo == MODO_TEST) {
+  if (modo == MODO_TEST)
+  {
     switch (test)
     {
-      case TEST_LCD:
-        lcd.print("TEST: LCD");
-        break;
-      case TEST_LEDS:
-        lcd.print("TEST: LEDS");
-        break;
-      case TEST_BUZZER:
-        lcd.print("TEST: BUZZER");      
-        break;
-      case TEST_ETHERNET:
-        lcd.print("TEST: ETHERNET");
-        break;
-      case TEST_GUITARRA:
-        lcd.print("TEST: GUITARRA");
-        break;
-      case TEST_ORGANO:
-        lcd.print("TEST: ORGANO");
-        break;      
-      case TEST_EDM:
-        lcd.print("TEST: EDM");
-        break;    
-      case TEST_PIANO:
-        lcd.print("TEST: PIANO");
-        break;
-    }
-
-  } else {
-    
-    switch (sonido)
-    {
-      case SONIDO_PIANO:
-        lcd.print("SONIDO: PIANO");
-        break;
-      case SONIDO_GUITARRA:
-        lcd.print("SONIDO: GUITARRA");
-        break;
-      case SONIDO_ORGANO:
-        lcd.print("SONIDO: ORGANO");
-        break;
-      case SONIDO_EDM:
-        lcd.print("SONIDO: EDM");
-        break;
-      case SONIDO_CUSTOM_1:
-        lcd.print("SONIDO: CUSTOM_1");
-        break;
-      case SONIDO_CUSTOM_2:
-        lcd.print("SONIDO: CUSTOM_2");
-        break;
+    case TEST_LCD:
+      lcd.print("TEST: LCD");
+      break;
+    case TEST_LEDS:
+      lcd.print("TEST: LEDS");
+      break;
+    case TEST_BUZZER:
+      lcd.print("TEST: BUZZER");
+      break;
+    case TEST_ETHERNET:
+      lcd.print("TEST: ETHERNET");
+      break;
+    case TEST_GUITARRA:
+      lcd.print("TEST: GUITARRA");
+      break;
+    case TEST_ORGANO:
+      lcd.print("TEST: ORGANO");
+      break;
+    case TEST_EDM:
+      lcd.print("TEST: EDM");
+      break;
+    case TEST_PIANO:
+      lcd.print("TEST: PIANO");
+      break;
     }
   }
-
+  else
+  {
+    switch (sonido)
+    {
+    case SONIDO_PIANO:
+      lcd.print("SONIDO: PIANO");
+      break;
+    case SONIDO_GUITARRA:
+      lcd.print("SONIDO: GUITARRA");
+      break;
+    case SONIDO_ORGANO:
+      lcd.print("SONIDO: ORGANO");
+      break;
+    case SONIDO_EDM:
+      lcd.print("SONIDO: EDM");
+      break;
+    case SONIDO_CUSTOM_1:
+      lcd.print("SONIDO: CUSTOM_1");
+      break;
+    case SONIDO_CUSTOM_2:
+      lcd.print("SONIDO: CUSTOM_2");
+      break;
+    }
+  }
 }
 
 // leer el bluetooth
@@ -303,13 +320,16 @@ void leerBluetooth()
   if (Serial1.available())
   {
     int lectura = Serial1.read();
-    if (lectura == 'T'){
+    if (lectura == 'T')
+    {
       cambiarModo(MODO_TEST);
     }
-    else if (lectura == 'N') {
+    else if (lectura == 'N')
+    {
       cambiarModo(MODO_NORMAL);
     }
-    else if (lectura == 'M'){
+    else if (lectura == 'M')
+    {
       cambiarModo(MODO_MANTENIMIENTO);
     }
     else if (lectura == 'P')
@@ -328,39 +348,36 @@ void leerBluetooth()
     {
       cambiarTipoSonido(SONIDO_EDM);
     }
-    else if (lectura == '1')
+    else if (lectura == '1' || lectura == '2')
     {
-      if (modo == MODO_MANTENIMIENTO) {
-        cambiarTipoSonido(SONIDO_CUSTOM_1);
+      if (modo == MODO_MANTENIMIENTO)
+      {
+        if (lectura == '1')
+        {
+          cambiarTipoSonido(SONIDO_CUSTOM_1);
+        }
+        else
+        {
+          cambiarTipoSonido(SONIDO_CUSTOM_2);
+        }
       }
-      else {
+      else
+      {
         lcd.clear();
         lcd.print("ERROR: NO SE");
         lcd.setCursor(0, 1);
-        lcd.print("PERMITE CUSTOM_1");
-        tone(BUZZER, NOTE_BUZZER, DURATION_BUZZER);        
+        lcd.print("PERMITE CUSTOM");
+        tone(BUZZER, NOTE_BUZZER, DURATION_BUZZER);
         delay(3000);
-      }
-    }
-    else if (lectura == '2')
-    {
-      if (modo == MODO_MANTENIMIENTO) {
-        cambiarTipoSonido(SONIDO_CUSTOM_2);
-      }
-      else {
-        lcd.clear();
-        lcd.print("ERROR: NO SE");
-        lcd.setCursor(0, 1);
-        lcd.print("PERMITE CUSTOM_2");
-        tone(BUZZER, NOTE_BUZZER, DURATION_BUZZER);        
-        delay(3000);
+        imprimirLcd();
       }
     }
   }
 }
 
 // notas de prueba
-void testNotes () {
+void testNotes()
+{
   Serial.write(notes[0]);
   delay(400);
 
@@ -372,16 +389,18 @@ void testNotes () {
 }
 
 // probar leds
-void testLED () {
+void testLED()
+{
   test = TEST_LEDS;
   imprimirLcd();
 
-  for(int i=0;i<2;i++) {    
+  for (int i = 0; i < 2; i++)
+  {
     digitalWrite(LED_BUILTIN, HIGH);
     digitalWrite(ledNotas, HIGH);
-  
+
     delay(2000);
-  
+
     digitalWrite(LED_BUILTIN, LOW);
     digitalWrite(ledNotas, LOW);
 
@@ -390,21 +409,22 @@ void testLED () {
 }
 
 // probar ethernet
-void testEthernet () {
+void testEthernet()
+{
   test = TEST_ETHERNET;
   imprimirLcd();
 
   char url[16];
-  strcpy(url,"/test");
+  strcpy(url, "/test");
   mandarRequestHttp(POST, url, NULL);
 }
 
 // probar los sonidos
-void testSonidos () {
+void testSonidos()
+{
   test = TEST_GUITARRA;
   cambiarTipoSonido(SONIDO_GUITARRA);
   testNotes();
-
 
   test = TEST_ORGANO;
   cambiarTipoSonido(SONIDO_ORGANO);
@@ -416,11 +436,12 @@ void testSonidos () {
 
   test = TEST_PIANO;
   cambiarTipoSonido(SONIDO_PIANO);
-  testNotes();  
+  testNotes();
 }
 
 // probar el buzzer
-void testBuzzer () {
+void testBuzzer()
+{
   test = TEST_BUZZER;
   imprimirLcd();
 
@@ -435,8 +456,8 @@ void testBuzzer () {
 }
 
 // probar el lcd
-void testLCD () {
-
+void testLCD()
+{
   int i = 0;
   int j = 0;
 
@@ -447,8 +468,10 @@ void testLCD () {
 
   lcd.clear();
   lcd.blink();
-  for (i=0;i<2;i++) {
-    for(j=0;j<16;j++) {
+  for (i = 0; i < 2; i++)
+  {
+    for (j = 0; j < 16; j++)
+    {
       lcd.setCursor(j, i);
       delay(800);
     }
@@ -457,7 +480,8 @@ void testLCD () {
 }
 
 // ## setup ##
-void setup() {
+void setup()
+{
   // BUZZER
   pinMode(BUZZER, OUTPUT);
 
@@ -478,9 +502,8 @@ void setup() {
   lcd.setCursor(0, 0);
   lcd.print("Bienvenido!");
 
-  if (Ethernet.begin(mac) == 0) {
-    Ethernet.begin(mac, ip);
-  }  
+  Ethernet.begin(mac, ip);
+
   delay(2000);
 
   // init modo
@@ -490,8 +513,9 @@ void setup() {
   cambiarTipoSonido(SONIDO_PIANO);
 }
 
-// # loop ## 
-void loop() {
+// # loop ##
+void loop()
+{
 
   leerBluetooth();
 
@@ -506,9 +530,10 @@ void loop() {
     cambiarModo(MODO_NORMAL);
     break;
   default:
-    for (int i = 0; i < 12; i++) {
+    for (int i = 0; i < 12; i++)
+    {
       handleKey(i);
-    }  
+    }
     break;
   }
 
